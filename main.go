@@ -10,7 +10,7 @@ import (
 
 func main() {
 
-	fname := flag.String("filename", "file.aac", "path of the audio file")
+	fname := flag.String("filename", "./assets/file.mp3", "path of the audio file")
 	flag.Parse()
 	file, err := os.Open(*fname)
 	if err != nil {
@@ -32,7 +32,7 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 
-		w.Header().Add("Content-Type", "audio/aac")
+		w.Header().Add("Content-Type", "audio/mpeg")
 		w.Header().Add("Connection", "keep-alive")
 
 		flusher, ok := w.(http.Flusher)
