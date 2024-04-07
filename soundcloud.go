@@ -20,7 +20,7 @@ type Response struct {
 	Tracks []TrackInfo `json:"tracks"`
 }
 
-const songStationUrl = "https://soundcloud.com/discover/sets/track-stations:718571584"
+const songStationUrl = "https://soundcloud.com/discover/sets/track-stations:78531527"
 
 var clientId string
 var api *sc.API
@@ -37,8 +37,8 @@ func init() {
 
 func getSongsIds(stationUrl string) []int64 {
 	var encodedUrl = url.QueryEscape(stationUrl)
-  var resolveUrl = fmt.Sprintf("https://api-v2.soundcloud.com/resolve?url=%s&client_id=%s&app_version=1711450916&app_locale=en", encodedUrl, clientId)
-	
+	var resolveUrl = fmt.Sprintf("https://api-v2.soundcloud.com/resolve?url=%s&client_id=%s&app_version=1711450916&app_locale=en", encodedUrl, clientId)
+
 	resp, err := http.Get(resolveUrl)
 	if err != nil {
 		log.Fatal("Couldn't get next songs in line")
@@ -75,9 +75,12 @@ func downloadSongById(songId int64) string  {
 	return fileName
 }
 
+func getStationUrlById(id int64) string {
+	return fmt.Sprintf("https://soundcloud.com/discover/sets/track-stations:%d", id)
+}
+
 func TopUpMusic(songEnded chan struct{}, songName chan string)  {
 
-	// TODO: set up pagination 
 	nextSongIds := getSongsIds(songStationUrl)
 	currentId := 0
 
@@ -90,7 +93,7 @@ func TopUpMusic(songEnded chan struct{}, songName chan string)  {
 				log.Fatal("Couldn't read assets dir")
 			}
 
-			if (len(musicFiles) >= 5) {
+			if len(musicFiles) >= 5 {
 				os.Remove("./assets/" + musicFiles[0].Name())
 			}
 
@@ -98,6 +101,14 @@ func TopUpMusic(songEnded chan struct{}, songName chan string)  {
 			currentId++
 
 			songName <- nextSongPath
+
+			// soundcloud gives 40 tracks in a station
+			if currentId % 39 == 0 {
+				stationUrl := getStationUrlById(nextSongIds[len(nextSongIds)-1])
+				nextSongIds = getSongsIds(stationUrl)
+				currentId = 1 // do not repeat the same song twice
+			}
+
 		}
 	}
 }

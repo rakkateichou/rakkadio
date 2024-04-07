@@ -93,18 +93,18 @@ func Stream(connectionPool *ConnectionPool, songEnded chan struct{}, nextSong ch
 
 		duration := 0.0
 		d := mp3.NewDecoder(tee)
-    var f mp3.Frame
-    skipped := 0
+		var f mp3.Frame
+		skipped := 0
 
-    for {
-        if err := d.Decode(&f, &skipped); err != nil {
-            if err == io.EOF {
-                break
-            }
-            return
-        }
-        duration = duration + f.Duration().Seconds()
-    }
+		for {
+			if err := d.Decode(&f, &skipped); err != nil {
+				if err == io.EOF {
+					break
+				}
+				return
+			}
+			duration = duration + f.Duration().Seconds()
+		}
 
 		filestat, err := songfile.Stat()
 		if err != nil {

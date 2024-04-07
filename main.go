@@ -20,11 +20,11 @@ func main() {
 
 	songEnded := make(chan struct{})
 	songName := make(chan string)
-	
+
 	go Stream(connPool, songEnded, songName)
 	go TopUpMusic(songEnded, songName)
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/stream", func(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Add("Content-Type", "audio/mpeg")
 		w.Header().Add("Connection", "keep-alive")
@@ -56,7 +56,7 @@ func main() {
 		}
 	})
 
-  log.Println("Listening on http://localhost:8080...")
+	log.Println("Listening on http://localhost:8080...")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 
 }
