@@ -20,7 +20,7 @@ type Response struct {
 	Tracks []TrackInfo `json:"tracks"`
 }
 
-const songStationUrl = "https://soundcloud.com/discover/sets/track-stations:78531527"
+const songStationUrl = "https://soundcloud.com/discover/sets/track-stations:718571584"
 
 var clientId string
 var api *sc.API
