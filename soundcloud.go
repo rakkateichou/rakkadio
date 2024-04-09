@@ -20,16 +20,22 @@ type Response struct {
 	Tracks []TrackInfo `json:"tracks"`
 }
 
-const songStationUrl = "https://soundcloud.com/discover/sets/track-stations:718571584"
-
 var clientId string
+var songStationUrl string
 var api *sc.API
 
 func init() {
 	clientId = os.Getenv("CLIENT_ID")
+	initialSongId := os.Getenv("SONG_ID")
+	
 	if clientId == "" {
 		log.Fatal("Env variable CLIENT_ID must not be empty")
 	}
+	if initialSongId == "" {
+		log.Fatal("Env variable SONG_ID must not be empty")
+	}
+
+	songStationUrl = fmt.Sprintf("https://soundcloud.com/discover/sets/track-stations:%s", initialSongId)
 
 	if err := os.MkdirAll("assets", os.ModeDir); err != nil {
 		log.Fatal("Error creating assets folder")
