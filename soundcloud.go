@@ -27,6 +27,13 @@ var api *sc.API
 
 func init() {
 	clientId = os.Getenv("CLIENT_ID")
+	if clientId == "" {
+		log.Fatal("Env variable CLIENT_ID must not be empty")
+	}
+
+	if err := os.MkdirAll("assets", os.ModeDir); err != nil {
+		log.Fatal("Error creating assets folder")
+	}
 
 	var err error
 	api, err = sc.New(sc.APIOptions{ClientID: clientId})
@@ -102,8 +109,7 @@ func TopUpMusic(songEnded chan struct{}, songName chan string)  {
 
 			songName <- nextSongPath
 
-			// soundcloud gives 40 tracks in a station
-			if currentId % 39 == 0 {
+			if currentId == len(nextSongIds)-1 {
 				stationUrl := getStationUrlById(nextSongIds[len(nextSongIds)-1])
 				nextSongIds = getSongsIds(stationUrl)
 				currentId = 1 // do not repeat the same song twice
