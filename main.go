@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 )
@@ -10,10 +11,14 @@ func main() {
 	connPool := NewConnectionPool()
 
 	songEnded := make(chan struct{})
-	songName := make(chan string)
+	songPath := make(chan string)
 
-	go Stream(connPool, songEnded, songName)
-	go TopUpMusic(songEnded, songName)
+	go Stream(connPool, songEnded, songPath)
+	go TopUpMusic(songEnded, songPath)
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello, World :)"))
+	})
 
 	http.HandleFunc("/stream", func(w http.ResponseWriter, r *http.Request) {
 
@@ -47,7 +52,21 @@ func main() {
 		}
 	})
 
-	log.Println("Listening on http://localhost:8080/stream...")
+	http.HandleFunc("/info", func(w http.ResponseWriter, r *http.Request) {
+		
+		w.Header().Add("Content-Type", "application/json")
+
+		trackInfo := GetCurrentTrackInfo()
+
+		res, err := json.Marshal(trackInfo)
+		if err != nil {
+			log.Fatal("Couldn't encode track info")
+		}
+
+		w.Write(res)
+	})
+
+	log.Println("Listening on http://localhost:8080...")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 
 }

@@ -1,74 +1,40 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
-	"net/url"
 	"os"
+	"strconv"
 	"time"
 
 	sc "github.com/zackradisic/soundcloud-api"
 )
 
-type TrackInfo struct {
-	Id int64 `json:"id"`
-}
-
-type Response struct {
-	Tracks []TrackInfo `json:"tracks"`
-}
-
-var clientId string
-var songStationUrl string
 var api *sc.API
+var tracks TrackPool
 
 func init() {
-	clientId = os.Getenv("CLIENT_ID")
 	initialSongId := os.Getenv("SONG_ID")
-	
-	if clientId == "" {
-		log.Fatal("Env variable CLIENT_ID must not be empty")
-	}
+
 	if initialSongId == "" {
 		log.Fatal("Env variable SONG_ID must not be empty")
 	}
-
-	songStationUrl = fmt.Sprintf("https://soundcloud.com/discover/sets/track-stations:%s", initialSongId)
 
 	if err := os.MkdirAll("assets", os.ModeDir); err != nil {
 		log.Fatal("Error creating assets folder")
 	}
 
 	var err error
-	api, err = sc.New(sc.APIOptions{ClientID: clientId})
+	api, err = sc.New(sc.APIOptions{})
 	if err != nil {
 		log.Fatal("Couldn't create SC API")
 	}
-}
 
-func getSongsIds(stationUrl string) []int64 {
-	var encodedUrl = url.QueryEscape(stationUrl)
-	var resolveUrl = fmt.Sprintf("https://api-v2.soundcloud.com/resolve?url=%s&client_id=%s&app_version=1711450916&app_locale=en", encodedUrl, clientId)
-
-	resp, err := http.Get(resolveUrl)
+	intInitialStringId, err := strconv.Atoi(initialSongId)
 	if err != nil {
-		log.Fatal("Couldn't get next songs in line")
+		log.Fatal("Couldn't convert song id to int")
 	}
-	defer resp.Body.Close()
-
-	var response Response
-	if json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		log.Fatal("Couldn't decode")
-	}
-
-	var ids []int64
-	for _, track := range response.Tracks {
-		ids = append(ids, track.Id)
-	}
-
-	return ids
+	tracks = TrackPool{API: api, InitialSongId: int64(intInitialStringId)}
 }
 
 func downloadSongById(songId int64) string  {
@@ -88,15 +54,11 @@ func downloadSongById(songId int64) string  {
 	return fileName
 }
 
-func getStationUrlById(id int64) string {
-	return fmt.Sprintf("https://soundcloud.com/discover/sets/track-stations:%d", id)
+func GetCurrentTrackInfo() TrackInfo {
+	return *tracks.CurrentTrack
 }
 
-func TopUpMusic(songEnded chan struct{}, songName chan string)  {
-
-	nextSongIds := getSongsIds(songStationUrl)
-	currentId := 0
-
+func TopUpMusic(songEnded chan struct{}, songPath chan string){
 	for {
 		select {
 		default:
@@ -110,17 +72,11 @@ func TopUpMusic(songEnded chan struct{}, songName chan string)  {
 				os.Remove("./assets/" + musicFiles[0].Name())
 			}
 
-			nextSongPath := downloadSongById(nextSongIds[currentId])
-			currentId++
+			path := downloadSongById(tracks.NextTrack().ID)
 
-			songName <- nextSongPath
+			log.Println(fmt.Sprintf("Playing %s by %s (%s)", tracks.CurrentTrack.Title, tracks.CurrentTrack.Author, path))
 
-			if currentId == len(nextSongIds)-1 {
-				stationUrl := getStationUrlById(nextSongIds[len(nextSongIds)-1])
-				nextSongIds = getSongsIds(stationUrl)
-				currentId = 1 // do not repeat the same song twice
-			}
-
+			songPath <- path
 		}
 	}
 }

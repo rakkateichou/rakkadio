@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	BUFFERSIZE = 8192
+	BUFFERSIZE = 4096
 )
 
 type Connection struct {
@@ -118,14 +118,12 @@ func Stream(connectionPool *ConnectionPool, songEnded chan struct{}, nextSong ch
 
 		songfile.Close()
 
-		log.Println(fmt.Sprintf("Playing %s", nextSongPath))
-
 		for range ticker.C {
 
 			_, err := songBuffer.Read(buffer)
 
 			if err == io.EOF {
-				log.Println(fmt.Sprintf("%s ended", nextSongPath))
+				log.Println(fmt.Sprintf("(%s) ended", nextSongPath))
 				ticker.Stop()
 				break
 			}
