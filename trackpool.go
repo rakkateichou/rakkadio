@@ -115,13 +115,13 @@ func (tp *TrackPool) fetchNextPage() {
 			log.Fatal("Couldn't get track info")
 		}
 
-		log.Printf("Fetched [%d/%d]\n", i, len(response.Tracks))
+		log.Printf("Fetched [%d/%d]\n", i+1, len(response.Tracks))
 
 		tp.List = append(tp.List, TrackInfo{
 			ID: track.ID,
 			Title: trackInfo[0].Title,
 			Author: trackInfo[0].User.Username,
-			Url: trackInfo[0].Permalink,
+			Url: trackInfo[0].PermalinkURL,
 		})
 	}
 }
