@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	BUFFERSIZE = 4096
+	BUFFERSIZE = 2048
 )
 
 type Connection struct {

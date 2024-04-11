@@ -52,7 +52,7 @@ func (tp *TrackPool) NextTrack() *TrackInfo {
 	tp.mu.Lock()
 	defer tp.mu.Unlock()
 
-	if tp.CurrentIndex > len(tp.List) - 1 {
+	if tp.CurrentIndex >= len(tp.List) - 1 {
 		tp.fetchNextPage()
 		tp.CurrentIndex = 0
 	} else {
