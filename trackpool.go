@@ -52,22 +52,24 @@ func (tp *TrackPool) NextTrack() *TrackInfo {
 	tp.mu.Lock()
 	defer tp.mu.Unlock()
 
+	if len(tp.List) == 1 {
+		return tp.CurrentTrack
+	}
+
 	if tp.CurrentIndex >= len(tp.List) - 1 {
 		tp.fetchNextPage()
-		tp.CurrentIndex = 0
 	} else {
 		tp.CurrentIndex++
 	}
+
+	log.Printf("Playing track [%d/%d]\n", tp.CurrentIndex + 1, len(tp.List))
 
 	tp.CurrentTrack = &tp.List[tp.CurrentIndex]
 	
 	return tp.CurrentTrack
 }
 
-func (tp *TrackPool) ClearList() {
-	tp.mu.Lock()
-	defer tp.mu.Unlock()
-
+func (tp *TrackPool) clearList() {
 	tp.List = []TrackInfo{}
 	tp.CurrentTrack = &TrackInfo{}
 	tp.CurrentIndex = 0
@@ -106,7 +108,7 @@ func (tp *TrackPool) fetchNextPage() {
 		log.Fatal("Couldn't decode")
 	}
 
-	clear(tp.List)
+	tp.clearList()
 
 	// TODO: make it async
 	for i, track := range response.Tracks {
@@ -123,5 +125,9 @@ func (tp *TrackPool) fetchNextPage() {
 			Author: trackInfo[0].User.Username,
 			Url: trackInfo[0].PermalinkURL,
 		})
+	}
+
+	if len(tp.List) > 1 && stationTrackID != tp.InitialSongId {
+		tp.CurrentIndex = 1
 	}
 }
